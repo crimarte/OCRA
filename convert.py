@@ -2,7 +2,7 @@ import pandas as pd
 import unicodedata
 
 # --- Step 1: Lettura CSV originale ---
-raw = pd.read_csv("Misura_flusso.csv", sep=";", decimal=",", encoding="cp1252", header=None)
+raw = pd.read_csv("Misura flusso vs angolo_CRC_OCRA_PCTO2025_csv.csv", sep=";", decimal=",", encoding="cp1252", header=None)
 
 # Estrai la prima riga come header
 header = raw.iloc[0].tolist()

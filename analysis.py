@@ -2,7 +2,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 print(pd.__version__)
-
+#%%
 data = pd.read_csv('Misura_flusso_ripulito.csv', encoding='utf-8')
 #print(data.head)
 #print(data["Misure 1"])
@@ -54,8 +54,16 @@ sigma0 = 20  # stima iniziale arbitraria
 
 p0 = [A0, mu0, sigma0]
 
+valid_mask = (~np.isnan(x)) & (~np.isnan(y)) & (~np.isnan(y_err)) & (~np.isinf(y_err))
+
+x_clean = x[valid_mask]
+y_clean = y[valid_mask]
+y_err_clean = y_err[valid_mask]
+
+popt, pcov = curve_fit(gaussiana, x_clean, y_clean, sigma=y_err_clean, p0=p0, absolute_sigma=True)
+
 # Fit con errore sui dati y
-popt, pcov = curve_fit(gaussiana, x, y, sigma=y_err, p0=p0, absolute_sigma=True)
+#popt, pcov = curve_fit(gaussiana, x, y, sigma=y_err, p0=p0, absolute_sigma=True)
 
 # Estrazione dei parametri e incertezze
 A_fit, mu_fit, sigma_fit = popt
