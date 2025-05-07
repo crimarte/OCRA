@@ -42,53 +42,50 @@ import matplotlib.pyplot as plt
 x = data[col_angolo].values
 y = data[col_flux].values
 y_err = data[col_errore].values
-
+"""
 # Definizione della funzione gaussiana
 def gaussiana(x, A, mu, sigma):
     return A * np.exp(- (x - mu)**2 / (2 * sigma**2))
-
+"""
+def cos2_fit(theta, A, mu, C):
+    return A * np.cos(np.radians(theta - mu))**2 + C
 # Stima iniziale dei parametri (aiuta il fit a convergere!)
-A0 = np.max(y)
-mu0 = x[np.argmax(y)]
-sigma0 = 20  # stima iniziale arbitraria
 
-p0 = [A0, mu0, sigma0]
+
+# valori iniziali ragionevoli per il fit
 
 valid_mask = (~np.isnan(x)) & (~np.isnan(y)) & (~np.isnan(y_err)) & (~np.isinf(y_err))
-
 x_clean = x[valid_mask]
 y_clean = y[valid_mask]
 y_err_clean = y_err[valid_mask]
 
-popt, pcov = curve_fit(gaussiana, x_clean, y_clean, sigma=y_err_clean, p0=p0, absolute_sigma=True)
+A0 = max(y_clean) - min(y_clean)
+mu0 = 0  # ipotizziamo un massimo vicino a 0
+C0 = min(y_clean)
+p0 = [A0, mu0, C0]
+# esegui il fit
+popt, pcov = curve_fit(cos2_fit, x_clean, y_clean, sigma=y_err_clean, p0=p0, absolute_sigma=True)
 
-# Fit con errore sui dati y
-#popt, pcov = curve_fit(gaussiana, x, y, sigma=y_err, p0=p0, absolute_sigma=True)
+# parametri del fit
+A_fit, mu_fit, C_fit = popt
+A_err, mu_err, C_err = np.sqrt(np.diag(pcov))
 
-# Estrazione dei parametri e incertezze
-A_fit, mu_fit, sigma_fit = popt
-dA, dmu, dsigma = np.sqrt(np.diag(pcov))
+print(f"A     = {A_fit:.3f} ± {A_err:.3f}")
+print(f"mu    = {mu_fit:.3f} ± {mu_err:.3f}")
+print(f"C     = {C_fit:.3f} ± {C_err:.3f}")
 
-print(f"Fit gaussiano trovato:")
-print(f"A     = {A_fit:.3f} ± {dA:.3f}")
-print(f"mu    = {mu_fit:.3f} ± {dmu:.3f}")
-print(f"sigma = {sigma_fit:.3f} ± {dsigma:.3f}")
+# visualizzazione del fit
+theta_fit = np.linspace(-90, 90, 400)  
+flux_fit = cos2_fit(theta_fit, A_fit, mu_fit, C_fit)
 
-# Valori per il fit da plottare
-x_fit = np.linspace(min(x), max(x), 500)
-y_fit = gaussiana(x_fit, *popt)
-
-# --- Plot ---
 plt.figure(figsize=(10, 6))
-plt.errorbar(x, y, yerr=y_err, fmt='o', label='Dati', capsize=5)
-plt.plot(x_fit, y_fit, label='Fit gaussiano', color='red')
-plt.xlabel("Angolo [°]")
-plt.ylabel("Flusso [Hz]")
-plt.title("Fit Gaussiano del Flusso")
+plt.errorbar(x_clean, y_clean, yerr=y_err_clean, fmt='o', label='Dati')
+plt.plot(theta_fit, flux_fit, color='red', label='Fit cos²')
+plt.xlabel('Angolo [gradi]')
+plt.ylabel('Flusso [Hz]')
+plt.title('Fit del flusso dei raggi cosmici con funzione cos²')
 plt.legend()
-plt.grid(True)
-plt.gca().invert_xaxis()  # opzionale
-plt.tight_layout()
+plt.grid()
 plt.show()
 
 # %%
